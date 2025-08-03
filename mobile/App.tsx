@@ -1,20 +1,21 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react';
+import { View, StatusBar } from 'react-native';
+
+import { initDb, seedExercisesIfNeeded } from './src/lib/db';
+import ExerciseLibrary from './src/screens/ExerciseLibrary';
 
 export default function App() {
+  // Initialize DB and seed on first mount
+  useEffect(() => {
+    initDb()
+      .then(() => seedExercisesIfNeeded())
+      .catch(err => console.warn('DB init failed', err));
+  }, []);
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+      <StatusBar barStyle="dark-content" />
+      <ExerciseLibrary />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
