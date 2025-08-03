@@ -1,0 +1,250 @@
+CoachBlue Hybrid Trainer App – Specification (v0.1)
+
+Purpose: Design an all‑inclusive Android (Samsung) fitness application that implements Coach Blue‑style hybrid bodybuilding + calisthenics programming, logs every workout metric, ingests Samsung Health data, and applies on‑device AI (OpenAI API) to adapt the plan for maximum results. MVP runs locally on the user’s phone, built on desktop, and later integrates with the broader Shipmate AI ecosystem.
+
+1. Core Feature Matrix
+
+ID
+
+Feature
+
+MVP
+
+Post‑MVP
+
+F1
+
+Workout Library – 4‑week hybrid plan (Mon–Fri) with weightlifting, resistance, core, cardio blocks
+
+✅
+
+Dynamic plan variants
+
+F2
+
+Real‑Time Session Tracker – displays current exercise, set/rep timer, immediate “NEXT UP” preview (superset‑aware)
+
+✅
+
+Voice cues, wearable haptic cues
+
+F3
+
+Metric Logging – weights, reps, RPE, rest, start/end timestamps
+
+✅
+
+Auto‑pull rest from heart‑rate recovery
+
+F4
+
+Dashboard & Progress Analytics – completion %, volume, PR charts, streaks
+
+✅
+
+AI‑driven insights & motivational badges
+
+F5
+
+Exercise How‑To – text cues + embedded video links (YouTube local fallback)
+
+✅
+
+3D model demos
+
+F6
+
+AI Adaptation Engine – weekly plan adjustments based on performance & Samsung Health metrics
+
+
+
+✅ (Phase 2)
+
+F7
+
+Samsung Health Sync – import calories, steps, HR, sleep via Health Connect API
+
+
+
+✅
+
+F8
+
+Notifications / Reminders – session start, hydration, cooldown
+
+
+
+✅
+
+F9
+
+Shipmate Integration Hook – REST/WS gateway for future data exchange
+
+
+
+✅
+
+2. High‑Level Architecture
+
+flowchart LR
+    subgraph Mobile App (React Native)
+        UI[UI Screens]
+        Logic[Workout Logic]
+        Storage(Local SQLite)
+        Health[Health Connect]
+        OpenAI[OpenAI API]
+        ShipmateGW[Shipmate Gateway]
+    end
+
+    UI --> Logic
+    Logic --> Storage
+    Logic --> Health
+    Logic --> OpenAI
+    Logic --> ShipmateGW
+
+Stack Rationale
+
+React Native + Expo → fast iteration, Android‑first, later iOS.
+
+TypeScript throughout for type‑safety.
+
+SQLite (expo‑sqlite) for offline persistence; migrates to Postgres when cloud sync added.
+
+Express + Prisma (Node) minimal backend if cloud sync required.
+
+OpenAI API called from phone (token stored via SecureStore). Rate‑limit via proxy later.
+
+Health Connect Android API for Samsung watch data; fallback manual entry forms.
+
+3. Data Model (SQLite ER Diagram)
+
+exercises (id, name, primary_muscle, video_url)
+
+workouts (id, name, day_of_week, cycle_week)
+
+workout_exercises (id, workout_id, exercise_id, sequence, sets, reps, superset_group)
+
+sessions (id, workout_id, start_ts, end_ts, week_index)
+
+sets_logged (id, session_id, exercise_id, set_index, weight, reps, rpe, duration_sec)
+
+health_snapshots (id, session_id, calories, avg_hr, steps, sleep_quality, imported_ts)
+
+ai_recommendations (id, created_ts, json_payload)
+
+4. Key User Stories
+
+Start Session: As a trainee I open today’s workout, hit Start, and see the first exercise, sets & reps, plus a countdown timer.
+
+Superset Flow: During a superset, the header shows “Superset Group A → Push‑Ups / Ring Rows”. After final set of Push‑Ups, the next card automatically expands to Ring Rows.
+
+Logging: After completing a set, I tap + to log weight/reps; app auto‑advances rest timer.
+
+Completion Screen: Finishing a workout shows session summary (# sets, volume, calories, duration) and updates week progress pie chart.
+
+Weekly AI Check‑in: Every Sunday, AI reviews logs + health data, produces adjustment (increase squat 5 lbs, add extra mobility day), updates upcoming week.
+
+5. Screen Flow
+
+Home / Dashboard → Progress rings, next workout CTA
+
+Workout Detail → list of exercises, start button
+
+Active Session → current exercise card + next‑up preview, weight/reps input, timer bar
+
+Session Summary → stats, feedback prompt, share option
+
+Exercise Library → search, how‑to page with video + cues
+
+Settings → API keys, health sync toggle, profile metrics
+
+6. MVP Development Roadmap
+
+Sprint
+
+Duration
+
+Deliverables
+
+0
+
+2 days
+
+Project repo, Expo setup, CI pipeline
+
+1
+
+1 week
+
+Exercise DB seed, Exercise Library screen
+
+2
+
+1 week
+
+Workout schedule & calendar logic
+
+3
+
+1 week
+
+Active Session tracker (basic) + logging
+
+4
+
+1 week
+
+Dashboard analytics (volume, completion)
+
+5
+
+1 week
+
+Health Connect integration (calories, HR)
+
+6
+
+1 week
+
+AI adaptation stub (OpenAI chat prompt)
+
+7
+
+3 days
+
+Polishing, Play Store internal testing build
+
+7. AI Adaptation Engine – Prompt Sketch
+
+SYSTEM: You are a hybrid strength & conditioning coach. Output JSON only.
+USER: Weekly log attached (JSON arrays: sets_logged, health_snapshots). Suggest next‑week plan (modifications, deload flags, motivation tip).
+
+Response schema → ai_recommendations.json saved and parsed to update workouts.
+
+8. Decisions & Resolutions
+
+Minimum Android version: Target Android 15 (API 35) for full feature set, with graceful degradation to Android 14 when feasible.
+
+Connectivity Mode: Offline‑first experience with seamless cloud sync when a network is available. Core logging and guidance run 100 % offline; AI calls, media fetches, and backups queue until online.
+
+Analytics Library: Adopt Victory Native for lightweight, mobile‑optimized charts (volume curves, streak rings). Can layer Recharts via WebView for future advanced dashboards.
+
+Video Hosting: Stream YouTube embeds to minimize bundle size, with optional local MP4 fallback for each exercise (download‑on‑first‑play).
+
+OpenAI API Key: Key received and escrowed in Expo SecureStore; never stored in plaintext.
+
+9. Next Steps (Sprint 0 Kick‑off)
+
+Scaffold Repo – Init React Native + Expo project, TypeScript config, ESLint & Prettier, GitHub Actions CI.
+
+SecureStore Stub – Implement provider for OpenAI key; verify test call.
+
+Health Connect Permissions POC – Minimal screen requesting Samsung Health permissions.
+
+README – Developer setup instructions (desktop + Galaxy sideload).
+
+Deliver Sprint 0 branch for your review within 48 hours.
+
+Once you confirm the build runs on your phone we’ll enter Sprint 1: Exercise Library & Seed Data.
+
+Prepared by: ChatGPT (Coach Blue App Architect) – 03 Aug 2025 by: ChatGPT (Coach Blue App Architect) – 03 Aug 2025*
